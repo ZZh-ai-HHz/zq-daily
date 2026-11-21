@@ -8,7 +8,7 @@
   python zq_auto.py --drift         与 zq_last.json 对比漂移
   python zq_auto.py --msg out.txt   同时把推送文本写入 out.txt
 """
-import urllib.request, ssl, json, sys, os, itertools
+import urllib.request, urllib.error, ssl, json, sys, os, itertools
 import numpy as np
 
 API = ("https://webapi.sporttery.cn/gateway/jc/football/getMatchCalculatorV1.qry"
@@ -68,8 +68,21 @@ def emp(p, side):
 
 def fetch():
     ctx = ssl.create_default_context(); ctx.check_hostname = False; ctx.verify_mode = ssl.CERT_NONE
-    req = urllib.request.Request(API, headers={"User-Agent": UA, "Referer": "https://www.sporttery.cn/"})
-    d = json.loads(urllib.request.urlopen(req, timeout=40, context=ctx).read().decode())
+    req = urllib.request.Request(API, headers={
+        "User-Agent": UA,
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "zh-CN,zh;q=0.9",
+        "Origin": "https://www.sporttery.cn",
+        "Referer": "https://www.sporttery.cn/jc/jsq/zqspf/",
+        "Connection": "keep-alive",
+    })
+    try:
+        raw = urllib.request.urlopen(req, timeout=40, context=ctx).read()
+    except urllib.error.HTTPError as e:
+        body = e.read().decode(errors="replace")
+        print(f"[fetch] HTTP {e.code} | {body[:600]}", file=sys.stderr)
+        raise
+    d = json.loads(raw.decode())
     rows = []
     for g in d["value"]["matchInfoList"]:
         for m in g["subMatchList"]:
