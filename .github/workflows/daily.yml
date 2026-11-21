@@ -6,6 +6,12 @@ on:
     - cron: '30 1 * * *'
     - cron: '30 9 * * *'
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'zq_auto.py'
+      - 'push.py'
+      - '.github/workflows/daily.yml'
 
 permissions:
   contents: write
